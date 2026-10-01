@@ -2,4 +2,4 @@
 venv/
 __pycache__/
 chroma_db/
-data/Tenant_Rights_Guide.pdf
+data/
