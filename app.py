@@ -1,18 +1,12 @@
-from src.pdf_loader import extract_text_from_pdf
-from src.chunker import chunk_text
+from src.embeddings import EmbeddingModel
 
 
-pdf_path = "data/Tenant Rights Navigator.pdf"    
+embedding_model = EmbeddingModel()
 
-# Extract text from PDF
-text = extract_text_from_pdf(pdf_path)
+text = "A landlord must return the tenant's security deposit according to the applicable rental law."
 
-# Split text into chunks
-chunks = chunk_text(text)
+embedding = embedding_model.embed_text(text)
 
-print("PDF TEXT EXTRACTED SUCCESSFULLY!")
-print(f"Total characters: {len(text)}")
-print(f"Total chunks: {len(chunks)}")
-
-print("\n--- FIRST CHUNK ---")
-print(chunks[0])
+print("Embedding generated successfully!")
+print(f"Embedding dimensions: {len(embedding)}")
+print(f"First 5 values: {embedding[:5]}")
