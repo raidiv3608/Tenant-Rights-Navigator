@@ -1,12 +1,56 @@
+from src.pdf_loader import extract_pages_from_pdf
+from src.chunker import chunk_pages
 from src.embeddings import EmbeddingModel
+from src.vector_store import VectorStore
 
 
+PDF_PATH = "data/legislation/karnataka/34 of 2001 (E).pdf"
+
+
+# 1. Extract and decode PDF
+print("Extracting Karnataka Rent Act...")
+pages = extract_pages_from_pdf(PDF_PATH)
+
+# 2. Create metadata-aware chunks
+print("Creating chunks...")
+chunks = chunk_pages(pages)
+
+# 3. Generate embeddings
+print("Generating embeddings...")
 embedding_model = EmbeddingModel()
 
-text = "A landlord must return the tenant's security deposit according to the applicable rental law."
+texts = [chunk["text"] for chunk in chunks]
+embeddings = embedding_model.embed_documents(texts)
 
-embedding = embedding_model.embed_text(text)
+# 4. Store in ChromaDB
+print("Storing documents in ChromaDB...")
+vector_store = VectorStore()
+vector_store.add_documents(chunks, embeddings)
 
-print("Embedding generated successfully!")
-print(f"Embedding dimensions: {len(embedding)}")
-print(f"First 5 values: {embedding[:5]}")
+print(f"\nSuccessfully stored {len(chunks)} chunks!")
+
+
+# 5. Test semantic retrieval
+query = "What does the law say about a tenancy agreement?"
+
+print(f"\nSearching for: {query}")
+
+query_embedding = embedding_model.embed_text(query)
+
+results = vector_store.search(
+    query_embedding,
+    n_results=3
+)
+
+print("\n--- RETRIEVED RESULTS ---")
+
+for i, document in enumerate(results["documents"][0], start=1):
+
+    metadata = results["metadatas"][0][i - 1]
+
+    print(f"\nResult {i}")
+    print(f"Page: {metadata['page']}")
+    print(f"Source: {metadata['source']}")
+    print(f"Jurisdiction: {metadata['jurisdiction']}")
+    print("\nText:")
+    print(document[:1000])
