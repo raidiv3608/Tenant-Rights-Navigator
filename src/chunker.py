@@ -1,23 +1,46 @@
-def chunk_pages(pages, chunk_size=1000, overlap=150):
+import re
+
+
+def chunk_pages(pages, chunk_size=800, overlap=120):
     chunks = []
 
     for page in pages:
         text = page["text"]
         page_number = page["page"]
 
-        start = 0
+        # Try to split around numbered legal sections.
+        sections = re.split(
+            r'(?=\n?\s*\d+\.\s+[A-Z][^\n]*?(?:-|—))',
+            text
+        )
 
-        while start < len(text):
-            end = start + chunk_size
+        for section in sections:
+            section = section.strip()
 
-            chunk_text = text[start:end].strip()
+            if not section:
+                continue
 
-            if chunk_text:
+            # If a section is small enough, keep it together.
+            if len(section) <= chunk_size:
                 chunks.append({
-                    "text": chunk_text,
+                    "text": section,
                     "page": page_number
                 })
 
-            start += chunk_size - overlap
+            # If a section is large, split it with overlap.
+            else:
+                start = 0
+
+                while start < len(section):
+                    end = start + chunk_size
+                    chunk_text = section[start:end].strip()
+
+                    if chunk_text:
+                        chunks.append({
+                            "text": chunk_text,
+                            "page": page_number
+                        })
+
+                    start += chunk_size - overlap
 
     return chunks
