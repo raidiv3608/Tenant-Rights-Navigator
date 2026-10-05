@@ -271,15 +271,45 @@ Legal Text:
     st.markdown(answer)
 
     # ========================================================
-    # DISPLAY SOURCES
-    # ========================================================
+# DISPLAY SOURCES
+# ========================================================
 
-    st.divider()
+st.divider()
 
-    st.subheader("📚 Retrieved Legal Sources")
+st.subheader("📚 Retrieved Legal Sources")
+
+# Remove duplicate source-page combinations
+unique_sources = []
+
+seen_sources = set()
+
+for result in results:
+
+    metadata = result["metadata"]
+
+    source_key = (
+        metadata["source"],
+        metadata["page"]
+    )
+
+    text = result["text"].strip()
+
+    # Ignore extremely short / unhelpful chunks
+    if len(text) < 100:
+        continue
+
+    if source_key not in seen_sources:
+
+        seen_sources.add(source_key)
+
+        unique_sources.append(result)
+
+
+# Display sources
+if unique_sources:
 
     for i, result in enumerate(
-        results,
+        unique_sources,
         start=1
     ):
 
@@ -303,7 +333,12 @@ Legal Text:
                 result["text"]
             )
 
+else:
 
+    st.info(
+        "No sufficiently detailed legal source "
+        "was retrieved for this question."
+    )
 # ============================================================
 # FOOTER
 # ============================================================
