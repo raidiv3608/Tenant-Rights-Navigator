@@ -50,29 +50,85 @@ PDF_PATH = "data/legislation/karnataka/34 of 2001 (E).pdf"
 @st.cache_resource
 def load_navigator():
 
-    # Extract PDF
-    pages = extract_pages_from_pdf(PDF_PATH)
+    # --------------------------------------------------------
+    # Load persistent vector database
+    # --------------------------------------------------------
 
-    # Create chunks
-    chunks = chunk_pages(pages)
-
-    # Load embedding model
-    embedding_model = EmbeddingModel()
-
-    # Generate embeddings
-    texts = [chunk["text"] for chunk in chunks]
-
-    embeddings = embedding_model.embed_documents(texts)
-
-    # Load vector store
     vector_store = VectorStore()
 
-    vector_store.add_documents(
-        chunks,
-        embeddings
-    )
+    # Check whether ChromaDB already contains documents
+    existing_count = vector_store.collection.count()
 
-    # Load Gemini
+    # --------------------------------------------------------
+    # FIRST RUN
+    # --------------------------------------------------------
+
+    if existing_count == 0:
+
+        print("ChromaDB is empty.")
+        print("Extracting Karnataka Rent Act...")
+
+        # Extract PDF
+        pages = extract_pages_from_pdf(PDF_PATH)
+
+        print(f"Pages extracted: {len(pages)}")
+
+        # Create chunks
+        chunks = chunk_pages(pages)
+
+        print(f"Chunks created: {len(chunks)}")
+
+        # Load embedding model
+        embedding_model = EmbeddingModel()
+
+        print("Generating embeddings...")
+
+        texts = [
+            chunk["text"]
+            for chunk in chunks
+        ]
+
+        embeddings = embedding_model.embed_documents(
+            texts
+        )
+
+        print("Storing documents in ChromaDB...")
+
+        vector_store.add_documents(
+            chunks,
+            embeddings
+        )
+
+        print(
+            f"Successfully stored "
+            f"{len(chunks)} chunks!"
+        )
+
+    # --------------------------------------------------------
+    # EXISTING DATABASE
+    # --------------------------------------------------------
+
+    else:
+
+        print(
+            f"Existing ChromaDB detected "
+            f"({existing_count} chunks)."
+        )
+
+        print(
+            "Skipping PDF extraction "
+            "and embedding generation."
+        )
+
+        # We still need the embedding model because
+        # it is required to embed new user questions.
+
+        embedding_model = EmbeddingModel()
+
+    # --------------------------------------------------------
+    # LOAD GEMINI
+    # --------------------------------------------------------
+
     llm = GeminiLLM()
 
     return (
@@ -148,10 +204,12 @@ if ask_button:
         st.stop()
 
     # --------------------------------------------------------
-    # EMBED QUERY
+    # EMBED QUERY AND SEARCH
     # --------------------------------------------------------
 
-    with st.spinner("Searching the legal database..."):
+    with st.spinner(
+        "Searching the legal database..."
+    ):
 
         query_embedding = embedding_model.embed_text(
             query
@@ -162,7 +220,6 @@ if ask_button:
             query_embedding,
             n_results=5
         )
-
 
     # --------------------------------------------------------
     # BUILD CONTEXT
@@ -190,7 +247,6 @@ Legal Text:
         .join(context_parts)
     )
 
-
     # --------------------------------------------------------
     # GENERATE ANSWER
     # --------------------------------------------------------
@@ -204,7 +260,6 @@ Legal Text:
             context
         )
 
-
     # ========================================================
     # DISPLAY ANSWER
     # ========================================================
@@ -214,7 +269,6 @@ Legal Text:
     st.subheader("Answer")
 
     st.markdown(answer)
-
 
     # ========================================================
     # DISPLAY SOURCES
