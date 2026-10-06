@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Tenant Rights Navigator</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVIGATION
+    ========================== -->
+
+    <header class="navbar">
+
+        <div class="brand">
+            <div class="brand-icon">⚖️</div>
+
+            <div>
+                <div class="brand-name">
+                    Tenant Rights Navigator
+                </div>
+
+                <div class="brand-subtitle">
+                    Karnataka
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#ask">Ask a Question</a>
+        </nav>
+
+    </header>
+
+
+    <!-- =========================
+         HERO
+    ========================== -->
+
+    <main>
+
+        <section
+            class="hero"
+            id="home"
+        >
+
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    ⚖️ LEGAL INFORMATION • AI ASSISTED
+                </div>
+
+                <h1>
+                    Know your
+                    <span>tenant rights.</span>
+                </h1>
+
+                <p>
+                    Understand the Karnataka Rent Act, 1999
+                    through clear, legislation-grounded answers.
+                </p>
+
+                <a
+                    href="#ask"
+                    class="primary-button"
+                >
+                    Explore Your Rights
+                    <span>→</span>
+                </a>
+
+            </div>
+
+            <div class="hero-visual">
+
+                <div class="legal-card main-card">
+
+                    <div class="card-top">
+                        <span>LEGAL DOCUMENT</span>
+                        <span>●</span>
+                    </div>
+
+                    <div class="document-icon">
+                        ⚖️
+                    </div>
+
+                    <h3>
+                        Karnataka Rent Act
+                    </h3>
+
+                    <p>
+                        1999
+                    </p>
+
+                    <div class="card-line"></div>
+
+                    <div class="document-info">
+                        <span>77 Pages</span>
+                        <span>258 Sections</span>
+                    </div>
+
+                </div>
+
+                <div class="floating-card floating-one">
+                    📄
+                    <span>Legislation</span>
+                </div>
+
+                <div class="floating-card floating-two">
+                    🔎
+                    <span>Smart Search</span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             FEATURES
+        ========================== -->
+
+        <section
+            class="features-section"
+            id="how-it-works"
+        >
+
+            <div class="section-heading">
+
+                <div class="section-label">
+                    HOW IT WORKS
+                </div>
+
+                <h2>
+                    Legal information,
+                    <span>made simpler.</span>
+                </h2>
+
+                <p>
+                    The Navigator connects your question
+                    with relevant provisions of the
+                    Karnataka Rent Act before generating
+                    an answer.
+                </p>
+
+            </div>
+
+
+            <div class="feature-grid">
+
+                <article class="feature-card">
+
+                    <div class="feature-number">
+                        01
+                    </div>
+
+                    <div class="feature-icon">
+                        📄
+                    </div>
+
+                    <h3>
+                        Official Legislation
+                    </h3>
+
+                    <p>
+                        Questions are answered using the
+                        Karnataka Rent Act, 1999 stored
+                        in the legal knowledge base.
+                    </p>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div class="feature-number">
+                        02
+                    </div>
+
+                    <div class="feature-icon">
+                        🔎
+                    </div>
+
+                    <h3>
+                        Smart Retrieval
+                    </h3>
+
+                    <p>
+                        Relevant legal passages are
+                        retrieved from the document
+                        before an answer is generated.
+                    </p>
+
+                </article>
+
+
+                <article class="feature-card">
+
+                    <div class="feature-number">
+                        03
+                    </div>
+
+                    <div class="feature-icon">
+                        🧠
+                    </div>
+
+                    <h3>
+                        Grounded Answers
+                    </h3>
+
+                    <p>
+                        AI uses the retrieved legal
+                        context to provide an answer
+                        grounded in the legislation.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             QUESTION SECTION
+        ========================== -->
+
+        <section
+            class="question-section"
+            id="ask"
+        >
+
+            <div class="question-container">
+
+                <div class="section-label">
+                    LEGAL ASSISTANT
+                </div>
+
+                <h2>
+                    What would you like
+                    <span>to know?</span>
+                </h2>
+
+                <p>
+                    Ask a question about tenancy,
+                    rent, eviction, agreements,
+                    or other matters covered by
+                    the Karnataka Rent Act.
+                </p>
+
+
+                <div class="question-box">
+
+                    <textarea
+                        id="questionInput"
+                        placeholder="Example: What does the law say about a tenancy agreement?"
+                    ></textarea>
+
+                    <div class="question-actions">
+
+                        <div class="suggestions">
+
+                            <button
+                                class="suggestion"
+                                data-question="What does the law say about a tenancy agreement?"
+                            >
+                                Tenancy agreement
+                            </button>
+
+                            <button
+                                class="suggestion"
+                                data-question="What does the law say about eviction?"
+                            >
+                                Eviction
+                            </button>
+
+                            <button
+                                class="suggestion"
+                                data-question="What does the law say about rent?"
+                            >
+                                Rent
+                            </button>
+
+                        </div>
+
+                        <button
+                            id="askButton"
+                            class="ask-button"
+                        >
+                            Search Legal Database
+                            <span>→</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- LOADING -->
+
+                <div
+                    id="loading"
+                    class="loading hidden"
+                >
+                    <div class="loader"></div>
+
+                    <div>
+                        <strong>
+                            Searching the legal database...
+                        </strong>
+
+                        <p>
+                            Retrieving relevant legislation
+                            and generating a grounded answer.
+                        </p>
+                    </div>
+                </div>
+
+
+                <!-- ANSWER -->
+
+                <div
+                    id="answerSection"
+                    class="answer-section hidden"
+                >
+
+                    <div class="answer-header">
+
+                        <div class="answer-label">
+                            GROUNDED ANSWER
+                        </div>
+
+                        <h3>
+                            Legal Information
+                        </h3>
+
+                    </div>
+
+                    <div
+                        id="answer"
+                        class="answer-content"
+                    ></div>
+
+                </div>
+
+
+                <!-- SOURCES -->
+
+                <div
+                    id="sourcesSection"
+                    class="sources-section hidden"
+                >
+
+                    <div class="answer-label">
+                        RETRIEVED SOURCES
+                    </div>
+
+                    <h3>
+                        Supporting legislation
+                    </h3>
+
+                    <div
+                        id="sources"
+                        class="sources-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             DISCLAIMER
+        ========================== -->
+
+        <section class="disclaimer-section">
+
+            <div class="disclaimer-card">
+
+                <div class="disclaimer-icon">
+                    ⚠️
+                </div>
+
+                <div>
+
+                    <h3>
+                        Important
+                    </h3>
+
+                    <p>
+                        Tenant Rights Navigator provides
+                        general legal information based on
+                        the legislation available in its
+                        knowledge base. It does not constitute
+                        personalized legal advice.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
+    <footer>
+
+        <div class="footer-brand">
+            ⚖️ Tenant Rights Navigator
+        </div>
+
+        <p>
+            AI-powered legal information grounded in
+            the Karnataka Rent Act, 1999.
+        </p>
+
+        <div class="footer-bottom">
+            <span>
+                © 2026 Tenant Rights Navigator
+            </span>
+
+            <span>
+                All rights reserved.
+        </div>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
