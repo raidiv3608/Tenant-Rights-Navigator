@@ -25,6 +25,14 @@ const sources =
 
 
 // =========================================================
+// BACKEND CONFIGURATION
+// =========================================================
+
+const API_URL =
+    "http://127.0.0.1:8000/ask";
+
+
+// =========================================================
 // SUGGESTION BUTTONS
 // =========================================================
 
@@ -45,7 +53,7 @@ document
 
 
 // =========================================================
-// ASK QUESTION
+// ASK BUTTON
 // =========================================================
 
 askButton.addEventListener(
@@ -54,11 +62,42 @@ askButton.addEventListener(
 );
 
 
+// =========================================================
+// ENTER KEY SUPPORT
+// =========================================================
+
+questionInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+
+            event.preventDefault();
+
+            askQuestion();
+
+        }
+
+    }
+);
+
+
+// =========================================================
+// ASK QUESTION
+// =========================================================
+
 async function askQuestion() {
 
     const question =
         questionInput.value.trim();
 
+
+    // -------------------------------------------------------
+    // VALIDATE QUESTION
+    // -------------------------------------------------------
 
     if (!question) {
 
@@ -72,24 +111,30 @@ async function askQuestion() {
     }
 
 
-    // ---------------------------------------------
+    // -------------------------------------------------------
     // RESET PREVIOUS RESULTS
-    // ---------------------------------------------
+    // -------------------------------------------------------
 
-    answerSection.classList.add("hidden");
+    answerSection.classList.add(
+        "hidden"
+    );
 
-    sourcesSection.classList.add("hidden");
+    sourcesSection.classList.add(
+        "hidden"
+    );
 
-    answer.innerHTML = "";
+    answer.textContent = "";
 
     sources.innerHTML = "";
 
 
-    // ---------------------------------------------
+    // -------------------------------------------------------
     // LOADING STATE
-    // ---------------------------------------------
+    // -------------------------------------------------------
 
-    loading.classList.remove("hidden");
+    loading.classList.remove(
+        "hidden"
+    );
 
     askButton.disabled = true;
 
@@ -99,18 +144,12 @@ async function askQuestion() {
 
     try {
 
-        /*
-         * The FastAPI backend will be connected here.
-         *
-         * For now this is intentionally disabled.
-         *
-         * Once app.py is created, this becomes:
-         *
-         * fetch("http://127.0.0.1:8000/ask", ...)
-         */
+        // ===================================================
+        // SEND QUESTION TO FASTAPI
+        // ===================================================
 
         const response = await fetch(
-            "http://127.0.0.1:8000/ask",
+            API_URL,
             {
                 method: "POST",
 
@@ -126,26 +165,66 @@ async function askQuestion() {
         );
 
 
+        // ===================================================
+        // CHECK SERVER RESPONSE
+        // ===================================================
+
         if (!response.ok) {
 
+            let errorMessage =
+                `Server returned ${response.status}`;
+
+            try {
+
+                const errorData =
+                    await response.json();
+
+                if (errorData.detail) {
+
+                    errorMessage =
+                        errorData.detail;
+
+                }
+
+            } catch (_) {
+
+                // Ignore JSON parsing failure.
+
+            }
+
             throw new Error(
-                `Server returned ${response.status}`
+                errorMessage
             );
 
         }
 
 
+        // ===================================================
+        // READ RESPONSE
+        // ===================================================
+
         const data =
             await response.json();
 
 
-        // -----------------------------------------
-        // ANSWER
-        // -----------------------------------------
+        // ===================================================
+        // DISPLAY ANSWER
+        // ===================================================
 
-        answer.textContent =
-            data.answer ||
-            "No answer was returned.";
+        if (
+            data.answer &&
+            data.answer.trim()
+        ) {
+
+            answer.textContent =
+                data.answer;
+
+        } else {
+
+            answer.textContent =
+                "No answer was returned by the legal assistant.";
+
+        }
 
 
         answerSection
@@ -153,12 +232,12 @@ async function askQuestion() {
             .remove("hidden");
 
 
-        // -----------------------------------------
-        // SOURCES
-        // -----------------------------------------
+        // ===================================================
+        // DISPLAY SOURCES
+        // ===================================================
 
         if (
-            data.sources &&
+            Array.isArray(data.sources) &&
             data.sources.length > 0
         ) {
 
@@ -171,21 +250,84 @@ async function askQuestion() {
                     sourceElement.className =
                         "source-item";
 
-                    sourceElement.innerHTML = `
-                        <strong>
-                            ${index + 1}.
-                            ${source.source || "Legal Source"}
-                        </strong>
 
-                        <div>
-                            Page:
-                            ${source.page || "N/A"}
-                        </div>
+                    // ---------------------------------------
+                    // SOURCE TITLE
+                    // ---------------------------------------
 
-                        <div class="source-text">
-                            ${source.text || ""}
-                        </div>
-                    `;
+                    const title =
+                        document.createElement("strong");
+
+                    title.textContent =
+                        `${index + 1}. ${
+                            source.source ||
+                            "Legal Source"
+                        }`;
+
+
+                    // ---------------------------------------
+                    // PAGE
+                    // ---------------------------------------
+
+                    const page =
+                        document.createElement("div");
+
+                    page.textContent =
+                        `Page: ${
+                            source.page ||
+                            "N/A"
+                        }`;
+
+
+                    // ---------------------------------------
+                    // JURISDICTION
+                    // ---------------------------------------
+
+                    const jurisdiction =
+                        document.createElement("div");
+
+                    jurisdiction.textContent =
+                        `Jurisdiction: ${
+                            source.jurisdiction ||
+                            "N/A"
+                        }`;
+
+
+                    // ---------------------------------------
+                    // LEGAL TEXT
+                    // ---------------------------------------
+
+                    const sourceText =
+                        document.createElement("div");
+
+                    sourceText.className =
+                        "source-text";
+
+                    sourceText.textContent =
+                        source.text ||
+                        "No source text available.";
+
+
+                    // ---------------------------------------
+                    // BUILD SOURCE CARD
+                    // ---------------------------------------
+
+                    sourceElement.appendChild(
+                        title
+                    );
+
+                    sourceElement.appendChild(
+                        page
+                    );
+
+                    sourceElement.appendChild(
+                        jurisdiction
+                    );
+
+                    sourceElement.appendChild(
+                        sourceText
+                    );
+
 
                     sources.appendChild(
                         sourceElement
@@ -202,24 +344,42 @@ async function askQuestion() {
         }
 
 
-        // -----------------------------------------
+        // ===================================================
         // SCROLL TO ANSWER
-        // -----------------------------------------
+        // ===================================================
 
-        answerSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+        setTimeout(() => {
+
+            answerSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        }, 100);
 
 
     }
 
+
+    // =======================================================
+    // ERROR HANDLING
+    // =======================================================
+
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Tenant Rights Navigator error:",
+            error
+        );
+
 
         answer.textContent =
-            "Unable to connect to the Tenant Rights Navigator backend. Make sure the FastAPI server is running.";
+            `Unable to generate the legal answer.
+
+${error.message}
+
+Please make sure the Tenant Rights Navigator backend is running.`;
+
 
         answerSection
             .classList
@@ -227,9 +387,16 @@ async function askQuestion() {
 
     }
 
+
+    // =======================================================
+    // RESTORE BUTTON
+    // =======================================================
+
     finally {
 
-        loading.classList.add("hidden");
+        loading.classList.add(
+            "hidden"
+        );
 
         askButton.disabled = false;
 
@@ -257,7 +424,9 @@ const observer =
 
             entries.forEach(entry => {
 
-                if (entry.isIntersecting) {
+                if (
+                    entry.isIntersecting
+                ) {
 
                     entry.target.classList.add(
                         "visible"
