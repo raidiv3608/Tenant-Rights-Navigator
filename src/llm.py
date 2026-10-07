@@ -1,4 +1,3 @@
-
 import os
 import time
 
@@ -6,7 +5,9 @@ from google import genai
 
 
 class GeminiLLM:
+
     def __init__(self):
+
         api_key = os.getenv("GEMINI_API_KEY")
 
         if not api_key:
@@ -18,7 +19,12 @@ class GeminiLLM:
             api_key=api_key
         )
 
-        self.model = "gemini-3.8-flash"
+        # Primary model
+        self.primary_model = "gemini-3.5-flash"
+
+        # Faster fallback model
+        self.fallback_model = "gemini-3.5-flash-lite"
+
 
     def generate_answer(self, question, context):
 
@@ -44,57 +50,108 @@ USER QUESTION:
 {question}
 
 Provide a concise answer based only on the legal context.
+
+FORMAT YOUR RESPONSE AS PLAIN TEXT.
+
+Do not use Markdown.
+Do not use *, **, \*, #, ###, bullet symbols, or other Markdown formatting.
+
+Use this structure:
+
+Summary:
+[short explanation]
+
+Relevant provisions:
+1. [provision]
+2. [provision]
+3. [provision]
+
+Source:
+Karnataka Rent Act, 1999
+Section: [relevant section]
+Page: [page]
+
+Disclaimer:
+This information is general legal information based strictly on the supplied legislation and is not personalized legal advice.
 """
 
-        max_attempts = 3
 
-        for attempt in range(1, max_attempts + 1):
+        # =====================================================
+        # TRY PRIMARY MODEL
+        # =====================================================
 
-            try:
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt
+        try:
+
+            response = self.client.models.generate_content(
+                model=self.primary_model,
+                contents=prompt
+            )
+
+            return response.text
+
+
+        except Exception as primary_error:
+
+            error_text = str(primary_error)
+
+            print(
+                "\nPrimary Gemini model failed:"
+            )
+
+            print(error_text)
+
+
+            # =================================================
+            # TEMPORARY FAILURE → TRY FALLBACK
+            # =================================================
+
+            if (
+                "503" in error_text
+                or "UNAVAILABLE" in error_text
+                or "429" in error_text
+                or "RESOURCE_EXHAUSTED" in error_text
+            ):
+
+                print(
+                    "\nTrying fallback Gemini model..."
                 )
 
-                return response.text
+                try:
 
-            except Exception as e:
-
-                error_text = str(e)
-
-                # Retry temporary server/rate-limit problems
-                if (
-                    "503" in error_text
-                    or "UNAVAILABLE" in error_text
-                    or "429" in error_text
-                    or "RESOURCE_EXHAUSTED" in error_text
-                ):
-
-                    if attempt < max_attempts:
-
-                        wait_time = attempt * 5
-
-                        print(
-                            f"\nGemini is temporarily unavailable."
-                            f" Retrying in {wait_time} seconds..."
-                        )
-
-                        time.sleep(wait_time)
-
-                    else:
-
-                        return (
-                            "Gemini is temporarily unavailable after "
-                            f"{max_attempts} attempts.\n\n"
-                            "Your legal-document retrieval system is "
-                            "working correctly, but the Gemini service "
-                            "did not accept the request."
-                        )
-
-                else:
-
-                    return (
-                        "Gemini could not generate the answer.\n\n"
-                        f"Technical error: {type(e).__name__}: {e}"
+                    response = self.client.models.generate_content(
+                        model=self.fallback_model,
+                        contents=prompt
                     )
 
+                    return response.text
+
+
+                except Exception as fallback_error:
+
+                    print(
+                        "\nFallback Gemini model also failed:"
+                    )
+
+                    print(
+                        str(fallback_error)
+                    )
+
+                    return (
+                        "Gemini is temporarily unavailable.\n\n"
+                        "The legal document retrieval system "
+                        "worked correctly, but the AI generation "
+                        "service is currently unavailable. "
+                        "Please try again shortly."
+                    )
+
+
+            # =================================================
+            # OTHER ERROR
+            # =================================================
+
+            return (
+                "Gemini could not generate the answer.\n\n"
+                f"Technical error: "
+                f"{type(primary_error).__name__}: "
+                f"{primary_error}"
+            )

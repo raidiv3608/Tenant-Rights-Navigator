@@ -216,8 +216,8 @@ async function askQuestion() {
             data.answer.trim()
         ) {
 
-            answer.textContent =
-                data.answer;
+            answer.innerHTML =
+                formatAnswer(data.answer);
 
         } else {
 
@@ -251,10 +251,6 @@ async function askQuestion() {
                         "source-item";
 
 
-                    // ---------------------------------------
-                    // SOURCE TITLE
-                    // ---------------------------------------
-
                     const title =
                         document.createElement("strong");
 
@@ -264,10 +260,6 @@ async function askQuestion() {
                             "Legal Source"
                         }`;
 
-
-                    // ---------------------------------------
-                    // PAGE
-                    // ---------------------------------------
 
                     const page =
                         document.createElement("div");
@@ -279,10 +271,6 @@ async function askQuestion() {
                         }`;
 
 
-                    // ---------------------------------------
-                    // JURISDICTION
-                    // ---------------------------------------
-
                     const jurisdiction =
                         document.createElement("div");
 
@@ -292,10 +280,6 @@ async function askQuestion() {
                             "N/A"
                         }`;
 
-
-                    // ---------------------------------------
-                    // LEGAL TEXT
-                    // ---------------------------------------
 
                     const sourceText =
                         document.createElement("div");
@@ -307,10 +291,6 @@ async function askQuestion() {
                         source.text ||
                         "No source text available.";
 
-
-                    // ---------------------------------------
-                    // BUILD SOURCE CARD
-                    // ---------------------------------------
 
                     sourceElement.appendChild(
                         title
@@ -360,11 +340,6 @@ async function askQuestion() {
 
     }
 
-
-    // =======================================================
-    // ERROR HANDLING
-    // =======================================================
-
     catch (error) {
 
         console.error(
@@ -373,12 +348,14 @@ async function askQuestion() {
         );
 
 
-        answer.textContent =
-            `Unable to generate the legal answer.
+        answer.innerHTML =
+            formatAnswer(
+                `Unable to generate the legal answer.
 
 ${error.message}
 
-Please make sure the Tenant Rights Navigator backend is running.`;
+Please make sure the Tenant Rights Navigator backend is running.`
+            );
 
 
         answerSection
@@ -387,10 +364,6 @@ Please make sure the Tenant Rights Navigator backend is running.`;
 
     }
 
-
-    // =======================================================
-    // RESTORE BUTTON
-    // =======================================================
 
     finally {
 
@@ -404,6 +377,143 @@ Please make sure the Tenant Rights Navigator backend is running.`;
             "Search Legal Database →";
 
     }
+
+}
+
+
+// =========================================================
+// FORMAT GEMINI ANSWER
+// =========================================================
+
+function formatAnswer(text) {
+
+    let formatted = text;
+
+
+    // -------------------------------------------------------
+    // Escape HTML for safety
+    // -------------------------------------------------------
+
+    formatted = formatted
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+
+    // -------------------------------------------------------
+    // Remove escaped Markdown characters
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /\\([*_#])/g,
+        "$1"
+    );
+
+
+    // -------------------------------------------------------
+    // Remove Markdown heading symbols
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /^#{1,6}\s*/gm,
+        ""
+    );
+
+
+    // -------------------------------------------------------
+    // Remove horizontal-rule Markdown
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /^\s*\*{3,}\s*$/gm,
+        ""
+    );
+
+
+    // -------------------------------------------------------
+    // Bold + italic
+    // ***text***
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /\*\*\*(.*?)\*\*\*/gs,
+        "<strong><em>$1</em></strong>"
+    );
+
+
+    // -------------------------------------------------------
+    // Bold
+    // **text**
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /\*\*(.*?)\*\*/gs,
+        "<strong>$1</strong>"
+    );
+
+
+    // -------------------------------------------------------
+    // Italic
+    // *text*
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /(^|[^\*])\*([^*\n]+)\*(?!\*)/g,
+        "$1<em>$2</em>"
+    );
+
+
+    // -------------------------------------------------------
+    // Remove escaped periods
+    // -------------------------------------------------------
+
+    formatted = formatted.replaceAll(
+    "\\.",
+    "."
+);
+
+
+    // -------------------------------------------------------
+    // Convert escaped numbered-list markers
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /^(\d+)\\\.\s*/gm,
+        "$1. "
+    );
+
+
+    // -------------------------------------------------------
+    // Convert Markdown bullet markers
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /^[ \t]*[-•]\s+/gm,
+        "• "
+    );
+
+
+    // -------------------------------------------------------
+    // Convert line breaks
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    // -------------------------------------------------------
+    // Clean excessive line breaks
+    // -------------------------------------------------------
+
+    formatted = formatted.replace(
+        /(<br>\s*){3,}/g,
+        "<br><br>"
+    );
+
+
+    return formatted.trim();
 
 }
 
@@ -441,6 +551,7 @@ const observer =
         {
             threshold: 0.15
         }
+
     );
 
 

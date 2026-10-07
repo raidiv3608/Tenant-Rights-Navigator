@@ -15,6 +15,10 @@ class VectorStore:
         )
 
 
+    # =========================================================
+    # ADD DOCUMENTS
+    # =========================================================
+
     def add_documents(self, chunks, embeddings):
 
         ids = [
@@ -30,6 +34,10 @@ class VectorStore:
         metadatas = [
             {
                 "page": chunk["page"],
+                "section": chunk.get(
+                    "section",
+                    "Unknown"
+                ),
                 "source": "Karnataka Rent Act, 1999",
                 "jurisdiction": "Karnataka"
             }
@@ -44,6 +52,10 @@ class VectorStore:
         )
 
 
+    # =========================================================
+    # SEARCH
+    # =========================================================
+
     def search(
         self,
         query,
@@ -51,24 +63,26 @@ class VectorStore:
         n_results=5
     ):
 
-        # Retrieve more candidates initially.
-        # We will rank them ourselves afterwards.
-        candidate_count = max(
-            n_results * 3,
-            15
-        )
-
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=candidate_count
+            n_results=n_results,
+            include=[
+                "documents",
+                "metadatas",
+                "distances"
+            ]
         )
 
         documents = results["documents"][0]
+
         metadatas = results["metadatas"][0]
 
-        # ----------------------------------------------------
-        # Extract meaningful words from the question
-        # ----------------------------------------------------
+        distances = results["distances"][0]
+
+
+        # =====================================================
+        # QUERY KEYWORDS
+        # =====================================================
 
         query_words = set(
             re.findall(
@@ -77,109 +91,69 @@ class VectorStore:
             )
         )
 
-        # Common words that should not influence ranking
-        stop_words = {
-            "what",
-            "does",
-            "this",
-            "that",
-            "about",
-            "from",
-            "with",
-            "under",
-            "where",
-            "when",
-            "which",
-            "what",
-            "law",
-            "tell",
-            "please"
-        }
-
-        query_words -= stop_words
 
         scored_results = []
 
-        # ----------------------------------------------------
-        # Score every retrieved candidate
-        # ----------------------------------------------------
 
-        for rank, (document, metadata) in enumerate(
-            zip(documents, metadatas)
+        # =====================================================
+        # COMBINE SEMANTIC + KEYWORD RELEVANCE
+        # =====================================================
+
+        for document, metadata, distance in zip(
+            documents,
+            metadatas,
+            distances
         ):
 
             document_lower = document.lower()
 
+
+            # Semantic similarity
+            semantic_score = 1 / (
+                1 + distance
+            )
+
+
+            # Keyword matching
             keyword_matches = sum(
                 1
                 for word in query_words
                 if word in document_lower
             )
 
-            # ------------------------------------------------
-            # Give additional importance to exact phrases
-            # ------------------------------------------------
 
-            phrase_bonus = 0
-
-            query_lower = query.lower()
-
-            if "tenancy agreement" in query_lower:
-                if "tenancy agreement" in document_lower:
-                    phrase_bonus += 4
-
-            if "rent" in query_lower:
-                if "rent" in document_lower:
-                    phrase_bonus += 1
-
-            if "eviction" in query_lower:
-                if "eviction" in document_lower:
-                    phrase_bonus += 2
-
-            if "deposit" in query_lower:
-                if "deposit" in document_lower:
-                    phrase_bonus += 2
-
-            if "sub tenant" in query_lower:
-                if "sub-tenant" in document_lower:
-                    phrase_bonus += 2
-
-            # ------------------------------------------------
-            # Earlier Chroma result = stronger semantic match
-            # ------------------------------------------------
-
-            semantic_rank_score = (
-                candidate_count - rank
+            # Small keyword boost
+            keyword_boost = (
+                keyword_matches * 0.02
             )
 
-            # ------------------------------------------------
-            # Final combined score
-            # ------------------------------------------------
 
+            # Final score
             final_score = (
-                semantic_rank_score
-                + keyword_matches * 2
-                + phrase_bonus
+                semantic_score +
+                keyword_boost
             )
+
 
             scored_results.append(
                 {
                     "text": document,
                     "metadata": metadata,
+                    "semantic_score": semantic_score,
                     "keyword_score": keyword_matches,
-                    "phrase_bonus": phrase_bonus,
-                    "score": final_score
+                    "final_score": final_score
                 }
             )
 
-        # ----------------------------------------------------
-        # Sort by combined relevance
-        # ----------------------------------------------------
+
+        # =====================================================
+        # SORT BY FINAL RELEVANCE
+        # =====================================================
 
         scored_results.sort(
-            key=lambda x: x["score"],
+            key=lambda x: x["final_score"],
             reverse=True
         )
 
-        # Return only the requested number
-        return scored_results[:n_results]
+
+        return scored_results

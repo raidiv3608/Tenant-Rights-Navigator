@@ -151,7 +151,7 @@ def ask_question(request: QuestionRequest):
 
         context_parts = []
 
-        for result in results:
+        for result in results[:3]:
 
             metadata = result["metadata"]
 
@@ -254,5 +254,5 @@ if __name__ == "__main__":
         "api:app",
         host="127.0.0.1",
         port=8000,
-        reload=True
+        reload=False
     )

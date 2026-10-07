@@ -104,15 +104,16 @@ for result in results:
     metadata = result["metadata"]
 
     context_parts.append(
-        f"""
+    f"""
 Source: {metadata['source']}
 Jurisdiction: {metadata['jurisdiction']}
+Section: {metadata.get('section', 'Unknown')}
 Page: {metadata['page']}
 
 Legal Text:
 {result['text']}
 """
-    )
+)
 
 
 context = "\n-----------------------------\n".join(
@@ -162,6 +163,7 @@ for i, result in enumerate(results, start=1):
 
     print(
         f"\n{i}. {metadata['source']} "
+        f"— {metadata.get('section', 'Unknown')} "
         f"— Page {metadata['page']}"
     )
 
