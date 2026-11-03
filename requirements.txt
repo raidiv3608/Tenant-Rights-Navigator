@@ -1,4 +1,6 @@
-streamlit
+fastapi
+uvicorn[standard]
+pydantic
 pypdf
 chromadb
 google-genai

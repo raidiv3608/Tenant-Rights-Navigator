@@ -1,5 +1,26 @@
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Python virtual environments
 venv/
+.venv/
+
+# Python cache
 __pycache__/
+*.py[cod]
+
+# Vector database
 chroma_db/
+
+# Local legislation documents
 data/
+
+# Backup files
+*.backup
+
+# IDE and OS files
+.vscode/
+.DS_Store
+Thumbs.db

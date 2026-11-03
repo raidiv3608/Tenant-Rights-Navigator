@@ -17,7 +17,17 @@ print("=" * 60)
 # =========================================================
 # 1. DELETE OLD CHROMADB
 # =========================================================
+vector_store = VectorStore()
 
+try:
+    vector_store.client.delete_collection(
+        name="karnataka_rent_act_v2"
+    )
+    print("Old collection deleted.")
+except Exception:
+    print("No existing collection to delete.")
+
+vector_store = VectorStore()
 
 
 # =========================================================

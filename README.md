@@ -1,135 +1,211 @@
-# 🏠 Tenant Rights Navigator
+# NyayaSetu – Tenant Rights & Rental Dispute Navigator
 
-An AI-powered legal-information assistant designed to help tenants understand rental agreements, tenancy laws, and common rental disputes in clear, simple language.
+An AI-powered legal information assistant designed to help tenants and landlords understand rental legislation and common tenancy-related disputes through natural-language questions.
 
-> **Current Status:** 🚧 Early Development — Karnataka V1
+**Version:** 1.0.0
+**Initial Jurisdiction:** Karnataka, India
+**Primary Legislation:** Karnataka Rent Act, 1999
 
-## 🎯 Project Overview
+## Project Overview
 
-Tenant Rights Navigator combines **document processing, semantic search, vector databases, and generative AI** to provide grounded information from official tenancy legislation.
+NyayaSetu is an AI-powered legal information platform that uses Retrieval-Augmented Generation (RAG) to provide answers grounded in official tenancy legislation.
 
-The first version focuses on the **Karnataka Rent Act, 1999**.
+The initial release focuses on the Karnataka Rent Act, 1999. Users can submit legal questions and receive explanations supported by relevant statutory provisions and source references.
 
-The long-term goal is to build a jurisdiction-aware platform that can help tenants:
+## Key Features
 
-* Understand relevant tenancy provisions
-* Identify potentially important clauses in rental agreements
-* Find relevant sections of tenancy legislation
-* Understand rental-dispute issues in simple language
-* Generate structured, formal communication drafts
-* Trace answers back to their underlying legal sources
+* PDF-based legislation extraction.
+* Custom PDF text decoding.
+* Page-aware document chunking.
+* Sentence-transformer embeddings.
+* ChromaDB vector storage.
+* Semantic legal document retrieval.
+* Gemini-powered question answering.
+* Source references with section and page information.
+* FastAPI backend.
+* Browser-based frontend.
 
-## 🧠 Current Architecture
+## Technology Stack
+
+| Component            | Technology            |
+| -------------------- | --------------------- |
+| Programming Language | Python                |
+| Backend              | FastAPI               |
+| AI Model             | Google Gemini         |
+| Vector Database      | ChromaDB              |
+| Embeddings           | Sentence Transformers |
+| PDF Processing       | pypdf                 |
+| Frontend             | HTML, CSS, JavaScript |
+| API Server           | Uvicorn               |
+
+## System Architecture
 
 ```text
 User Question
-      ↓
+      |
+      v
+FastAPI Backend
+      |
+      v
 Query Embedding
-      ↓
-ChromaDB
-      ↓
-Relevant Legal Chunks
-      ↓
-Gemini
-      ↓
-Grounded Legal Information
+      |
+      v
+ChromaDB Retrieval
+      |
+      v
+Relevant Legal Passages
+      |
+      v
+Gemini AI
+      |
+      v
+Grounded Legal Response
+      |
+      v
+Answer with Source References
 ```
 
-### Current RAG Pipeline
+## Document Processing Pipeline
 
 ```text
-Official Karnataka Legislation
-          ↓
-PDF Extraction
-          ↓
-Custom PDF Encoding Decoder
-          ↓
-Page-Aware Chunking
-          ↓
-Embeddings
-          ↓
-ChromaDB
-          ↓
-Semantic Retrieval
+Official Karnataka Legislation PDF
+              |
+              v
+         PDF Extraction
+              |
+              v
+       Custom Text Decoding
+              |
+              v
+        Document Chunking
+              |
+              v
+       Embedding Generation
+              |
+              v
+           ChromaDB
 ```
 
-## 🛠️ Technology Stack
-
-* **Python**
-* **Google Gemini API**
-* **ChromaDB**
-* **Sentence-transformer embeddings**
-* **pypdf**
-* **Git / GitHub**
-* **VS Code**
-
-## 📂 Project Structure
+## Project Structure
 
 ```text
 Tenant-Rights-Navigator/
-│
-├── app.py
-├── requirements.txt
-├── README.md
-│
-├── data/
-│   └── legislation/
-│       └── karnataka/
-│           └── 34 of 2001 (E).pdf
-│
-└── src/
-    ├── __init__.py
-    ├── chunker.py
-    ├── embeddings.py
-    ├── llm.py
-    ├── pdf_loader.py
-    ├── pipeline.py
-    ├── prompts.py
-    └── vector_store.py
+|
+|-- api.py
+|-- app.py
+|-- streamlit_app.py
+|-- rebuild_database.py
+|-- requirements.txt
+|-- README.md
+|-- .gitignore
+|
+|-- frontend/
+|
+|-- data/
+|   |-- legislation/
+|       |-- karnataka/
+|
+|-- chroma_db/
+|
+|-- src/
+|   |-- __init__.py
+|   |-- embeddings.py
+|   |-- chunker.py
+|   |-- pdf_loader.py
+|   |-- llm.py
+|   |-- vector_store.py
+|
+|-- tests/
 ```
 
-## ✅ Current Progress
+## Installation and Setup
 
-* [x] Python project environment
-* [x] Gemini API connection
-* [x] PDF text extraction
-* [x] Custom decoding for the Karnataka legislation PDF
-* [x] Page-aware document chunking
-* [x] Embedding generation
-* [x] ChromaDB vector storage
-* [x] Semantic retrieval
-* [x] Karnataka legal-source metadata
-* [ ] Retrieval precision improvements
-* [ ] Gemini + RAG integration
-* [ ] Source/citation display
-* [ ] Tenant lease PDF analysis
-* [ ] Red-flag clause detection
-* [ ] Formal notice generation
-* [ ] Streamlit interface
-* [ ] Multi-jurisdiction support
-* [ ] Production deployment
+### 1. Clone the repository
 
-## ⚖️ Legal Disclaimer
+```bash
+git clone https://github.com/raidiv3608/Tenant-Rights-Navigator.git
+cd Tenant-Rights-Navigator
+```
 
-Tenant Rights Navigator is intended to provide **general legal information and educational assistance**. It is not a substitute for advice from a qualified lawyer or legal professional.
+### 2. Create a virtual environment
 
-The system should rely on authoritative legal sources and clearly identify the jurisdiction and source of information wherever possible.
+```bash
+python -m venv venv
+```
 
-## 🚀 Future Vision
+Activate it on Windows:
 
-The project is being developed initially as a college and portfolio project, with the architecture designed to potentially evolve into a broader tenant-support platform.
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-Future versions may support:
+### 3. Install dependencies
 
-* Multiple Indian states and jurisdictions
-* Rental agreement analysis
-* Deposit and deduction disputes
-* Notice and eviction information
-* Automated document analysis
-* Source-linked legal explanations
-* Tenant-landlord communication assistance
-* A user-friendly web application
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure environment variables
+
+Create a `.env` file in the project root:
+
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+Never upload your actual API key to GitHub.
+
+### 5. Add the legislation PDF
+
+Place the Karnataka Rent Act legislation PDF in:
+
+```text
+data/legislation/karnataka/
+```
+
+### 6. Rebuild the vector database
+
+```bash
+python rebuild_database.py
+```
+
+### 7. Start the FastAPI backend
+
+```bash
+uvicorn api:app --reload
+```
+
+Open the API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+## Legal Disclaimer
+
+NyayaSetu provides general legal information for educational and informational purposes. It is not a substitute for professional legal advice.
+
+Users should consult a qualified legal professional for advice concerning their specific circumstances.
+
+## Future Development – Version 2.0
+
+Planned improvements include:
+
+* Citizen-friendly natural-language problem descriptions.
+* Automatic identification of relevant legal provisions.
+* Category-based exploration of tenant rights.
+* User registration and authentication.
+* Subscription-based access plans.
+* Payment gateway integration.
+* Improved user experience.
+* Expanded legal knowledge bases.
+
+## Project Vision
+
+**You don't need to know the law to understand your rights.**
+
+NyayaSetu aims to make tenancy-related legal information more accessible, understandable and useful to ordinary citizens.
 
 ---
 
-**Built as an independent software engineering project focused on AI, RAG, legal-information retrieval, and practical problem solving.**
+Developed as an independent software engineering project focused on AI, legal information retrieval and practical problem solving.

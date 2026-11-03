@@ -2,183 +2,201 @@ import re
 
 
 def chunk_pages(pages, chunk_size=800, overlap=120):
-
     chunks = []
 
-    # The actual Karnataka Rent Act begins on PDF page 8.
-    # Pages 1-7 contain the arrangement of sections,
-    # statement of objects and reasons, and introductory material.
     ACT_START_PAGE = 8
+    SCHEDULE_START_PAGE = 73
 
     current_section = "Unknown"
+    current_schedule = None
+    current_schedule_part = None
 
-    for page in pages:
+    section_pattern = re.compile(
+        r"(?m)^\s*(\d+)\s*\.\s*([A-Z][^\n]*)"
+    )
 
-        page_number = page["page"]
-        text = page["text"].strip()
+    schedule_pattern = re.compile(
+        r"(?im)^\s*(FIRST|SECOND|THIRD|FOURTH|FIFTH)\s+SCHEDULE\s*$"
+    )
+    def add_chunk(text, page, label):
+        text = re.sub(r"[ \t]+", " ", text).strip()
 
-        # -------------------------------------------------------
-        # IGNORE FRONT MATTER
-        # -------------------------------------------------------
+        if not text:
+            return
 
-        if page_number < ACT_START_PAGE:
-            continue
+        start = 0
 
-        # -------------------------------------------------------
-        # DETECT ACT SECTIONS
-        #
-        # Examples:
-        # 1.Short title...
-        # 2.Application of the Act...
-        # 3.Definitions...
-        # -------------------------------------------------------
+        while start < len(text):
 
-        section_pattern = (
-            r"(?m)^\s*(\d+)\s*\.\s*"
-            r"([A-Z][^\n]*)"
-        )
+            max_end = min(start + chunk_size, len(text))
 
-        matches = list(
-            re.finditer(
-                section_pattern,
-                text
-            )
-        )
-
-        # -------------------------------------------------------
-        # PAGE CONTAINS ONE OR MORE SECTION HEADINGS
-        # -------------------------------------------------------
-
-        if matches:
-
-            for i, match in enumerate(matches):
-
-                section_number = match.group(1)
-
-                section_name = (
-                    f"Section {section_number}"
-                )
-
-                # Remember the current section.
-                current_section = section_name
-
-                start = match.start()
-
-                if i + 1 < len(matches):
-
-                    end = matches[i + 1].start()
-
-                else:
-
-                    end = len(text)
-
-                section_text = (
-                    text[start:end].strip()
-                )
-
-                # ------------------------------------------------
-                # SMALL SECTION
-                # ------------------------------------------------
-
-                if len(section_text) <= chunk_size:
-
-                    chunks.append(
-                        {
-                            "text": section_text,
-                            "page": page_number,
-                            "section": section_name
-                        }
-                    )
-
-                # ------------------------------------------------
-                # LARGE SECTION
-                # ------------------------------------------------
-
-                else:
-
-                    start_position = 0
-
-                    while (
-                        start_position
-                        < len(section_text)
-                    ):
-
-                        end_position = (
-                            start_position
-                            + chunk_size
-                        )
-
-                        chunk_text = (
-                            section_text[
-                                start_position:end_position
-                            ].strip()
-                        )
-
-                        if chunk_text:
-
-                            chunks.append(
-                                {
-                                    "text": chunk_text,
-                                    "page": page_number,
-                                    "section": section_name
-                                }
-                            )
-
-                        start_position += (
-                            chunk_size - overlap
-                        )
-
-        # -------------------------------------------------------
-        # PAGE CONTINUES A PREVIOUS SECTION
-        # -------------------------------------------------------
-
-        else:
-
-            if not text:
-                continue
-
-            if len(text) <= chunk_size:
-
-                chunks.append(
-                    {
-                        "text": text,
-                        "page": page_number,
-                        "section": current_section
-                    }
-                )
+            if max_end == len(text):
+                end = max_end
 
             else:
+                search_start = start + chunk_size // 2
+                boundary_text = text[search_start:max_end]
 
-                start_position = 0
+                boundaries = list(
+                    re.finditer(r"[.!?;:]\s+|\n", boundary_text)
+                )
 
-                while (
-                    start_position
-                    < len(text)
-                ):
+                if boundaries:
+                    end = search_start + boundaries[-1].end()
 
-                    end_position = (
-                        start_position
-                        + chunk_size
-                    )
+                else:
+                    whitespace = [
+                        match.start()
+                        for match in re.finditer(r"\s+", text[start:max_end])
+                    ]
 
-                    chunk_text = (
-                        text[
-                            start_position:end_position
-                        ].strip()
-                    )
+                    if whitespace:
+                        end = start + whitespace[-1]
+                    else:
+                        end = max_end
 
-                    if chunk_text:
+            part = text[start:end].strip()
 
-                        chunks.append(
-                            {
-                                "text": chunk_text,
-                                "page": page_number,
-                                "section": current_section
-                            }
+            if part:
+                chunks.append({
+                    "text": part,
+                    "page": page,
+                    "section": label
+                })
+
+            if end >= len(text):
+                break
+
+            next_start = max(start + 1, end - overlap)
+
+            while next_start < end and not text[next_start].isspace():
+                next_start += 1
+
+            start = next_start
+    for item in pages:
+        page = item["page"]
+        text = item["text"].strip()
+
+        # Handle Fifth Schedule Part B explicitly.
+        if (
+            page >= 73
+            and re.search(
+                r"(?im)^\s*B\.\s*Day to day repairs",
+                text
+            )
+        ):
+            chunks.append({
+                "text": text,
+                "page": page,
+                "section": "Fifth Schedule, Part B"
+            })
+            current_schedule = "Fifth Schedule"
+            current_schedule_part = "B"
+            continue
+
+        if page < ACT_START_PAGE or not text:
+            continue
+
+        # --------------------------------------------------
+        # ORDINARY ACT SECTIONS: PDF pages 8-72
+        # --------------------------------------------------
+        if page < SCHEDULE_START_PAGE:
+            current_schedule = None
+            current_schedule_part = None
+
+            matches = list(section_pattern.finditer(text))
+
+            if not matches:
+                add_chunk(text, page, current_section)
+                continue
+
+            for i, match in enumerate(matches):
+                end = (
+                    matches[i + 1].start()
+                    if i + 1 < len(matches)
+                    else len(text)
+                )
+
+                current_section = f"Section {match.group(1)}"
+
+                add_chunk(
+                    text[match.start():end],
+                    page,
+                    current_section
+                )
+
+            continue
+
+        # --------------------------------------------------
+        # SCHEDULES: PDF page 73 onwards
+        # --------------------------------------------------
+        matches = list(schedule_pattern.finditer(text))
+        segments = []
+        position = 0
+
+        for match in matches:
+            if match.start() > position:
+                segments.append((text[position:match.start()], None))
+
+            segments.append((match.group(0), match.group(1).title()))
+            position = match.end()
+
+        if position < len(text):
+            segments.append((text[position:], None))
+
+        if not segments:
+            segments = [(text, None)]
+
+        for segment_text, heading in segments:
+            segment_text = segment_text.strip()
+
+            if not segment_text:
+                continue
+
+            if heading:
+                current_schedule = f"{heading} Schedule"
+                current_schedule_part = None
+
+                add_chunk(segment_text, page, current_schedule)
+                continue
+
+            if re.search(
+                r"(?i)above translation of|published in the official gazette",
+                segment_text
+            ):
+                continue
+
+            if current_schedule == "Fifth Schedule":
+                part_matches = list(re.finditer(
+                    r"(?im)^\s*([AB])\.\s*(.+)$",
+                    segment_text
+                ))
+
+                if part_matches:
+                    for i, match in enumerate(part_matches):
+                        current_schedule_part = match.group(1)
+
+                        end = (
+                            part_matches[i + 1].start()
+                            if i + 1 < len(part_matches)
+                            else len(segment_text)
                         )
 
-                    start_position += (
-                        chunk_size - overlap
+                        add_chunk(
+                            segment_text[match.start():end],
+                            page,
+                            f"Fifth Schedule, Part {current_schedule_part}"
+                        )
+                else:
+                    label = (
+                        f"Fifth Schedule, Part {current_schedule_part}"
+                        if current_schedule_part
+                        else "Fifth Schedule"
                     )
+
+                    add_chunk(segment_text, page, label)
+
+            elif current_schedule:
+                add_chunk(segment_text, page, current_schedule)
 
     return chunks
